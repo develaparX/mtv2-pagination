@@ -1,7 +1,7 @@
 Package.describe({
   name: 'srarfian:pagination',
   summary: 'Meteor pagination done right. Usable in ReactJS or Blaze templates.',
-  version: '1.2.2',
+  version: '1.2.3',
   git: 'https://github.com/develaparX/mtv2-pagination.git',
   documentation: 'README.md',
 });
@@ -15,7 +15,7 @@ Package.onUse((api) => {
     'meteor-base',
     'check',
     'underscore',
-    'mongo@2.0.0',
+    'mongo',
   ]);
 
   api.mainModule('server/pagination.js', 'server');
@@ -24,7 +24,7 @@ Package.onUse((api) => {
     'tracker',
     'reactive-var',
     'reactive-dict',
-    'mongo@2.0.0',
+    'mongo',
   ], 'client');
 
   api.mainModule('client/pagination.js', 'client');
