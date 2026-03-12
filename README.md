@@ -3,9 +3,13 @@ srarfian:pagination
 
 [![Meteor Compatible](https://img.shields.io/badge/meteor-1.2.1%20--%203.x-green.svg)](https://meteor.com)
 
-This package allows you to paginate the subscriptions over meteor's collections. It can be used in a Blaze template or in ReactJS.
+This is a **fork** of [kurounin:pagination](https://atmospherejs.com/kurounin/pagination) focused on the **core pagination engine** only.
 
 Compatible with **Meteor 1.2.1+**, **Meteor 2.x**, and **Meteor 3.x**.
+
+> 📦 **What's included?** Server-side publication (`publishPagination`) and client-side subscription management (`Meteor.Pagination`).
+> 
+> ❌ **What's NOT included?** UI components (paginator buttons, page numbers, etc.). For UI, use existing libraries like `kurounin:pagination-blaze` or build your own.
 
 
 Features
@@ -15,20 +19,43 @@ Features
 + **Instant changes propagation**. Any document changes are instantly propagated, thanks to light-weight modifications of subscription mechanism.
 + **Easy integration**. The package works out of the box. Page changes are triggered by a single reactive dictionary variable.
 + **Multiple collections per page**. Each Pagination instance runs independently. You can even create multiple paginations for one collection on a single page.
-+ **Bootstrap 3 and 4 compatible navigation template**. Blaze template for a bootstrap 3 and 4 styled paginator.
-+ **Bootstrap 3 and 4 compatible navigation react class**. ReactJS class for a bootstrap 3 and 4 styled paginator.
++ **Lightweight core package**. This package only contains the core pagination logic (server publication + client subscription). UI components (paginator buttons/templates) need to be implemented separately or use existing libraries.
 
 # Installation
+
+## Core Package (Required)
 ```meteor add srarfian:pagination```
 
-**For Blaze paginator install [kurounin:pagination-blaze](https://atmospherejs.com/kurounin/pagination-blaze) package**
-```meteor add develapar:pagination```
+> ⚠️ **Important**: This package only provides the **core pagination logic** (server-side publication and client-side subscription management). It does **NOT** include UI components (paginator buttons, page numbers, etc.).
 
-**For ReactJS paginator in Meteor 1.2 install [kurounin:pagination-reactjs](https://atmospherejs.com/kurounin/pagination-reactjs) package**
-```meteor add kurounin:pagination-reactjs```
+## UI Components (Optional - Choose One)
 
-**For ReactJS paginator in Meteor 1.3+ install [react-bootstrap-pagination](https://www.npmjs.com/package/react-bootstrap-pagination) npm package**
-```npm i react-bootstrap-pagination```
+Since this is a fork focused on the core pagination engine, you need to implement your own UI components or use existing libraries:
+
+### Option 1: Using kurounin's UI packages (Recommended)
+**For Blaze paginator:**
+```bash
+meteor add kurounin:pagination-blaze
+```
+Usage: `{{> defaultBootstrapPaginator pagination=templatePagination}}`
+
+**For ReactJS paginator (Meteor 1.2):**
+```bash
+meteor add kurounin:pagination-reactjs
+```
+
+**For ReactJS paginator (Meteor 1.3+):**
+```bash
+npm i react-bootstrap-pagination
+```
+
+### Option 2: Build Your Own UI
+You can create custom paginator components using the pagination instance methods:
+- `pagination.currentPage()` - get/set current page
+- `pagination.totalPages()` - get total number of pages
+- `pagination.perPage()` - get/set items per page
+
+See examples below for building custom paginators.
 
 # Usage
 
