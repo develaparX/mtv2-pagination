@@ -127,7 +127,7 @@ export function publishPagination(collection, settingsIn) {
       });
 
       self.onStop(() => {
-        Meteor.clearTimeout(countTimer);
+        Meteor.clearInterval(countTimer);
         handle.stop();
       });
     }
