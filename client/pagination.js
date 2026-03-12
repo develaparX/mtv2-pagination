@@ -92,8 +92,9 @@ class PaginationFactory {
     }
 
     this._activeObservers = {};
+    this._computation = null;
 
-    Tracker.autorun(() => {
+    this._computation = Tracker.autorun(() => {
       const options = {
         fields: this.fields(),
         sort: this.sort(),
@@ -240,9 +241,29 @@ class PaginationFactory {
   }
 
   totalPages() {
-    const totalPages = this.totalItems() / this.perPage();
-
+    const perPage = this.perPage();
+    if (!perPage || perPage <= 0) {
+      return 1;
+    }
+    const totalPages = this.totalItems() / perPage;
     return Math.ceil(totalPages || 1);
+  }
+
+  /**
+   * Cleanup method to stop all subscriptions and computations.
+   * Call this when component/template is destroyed to prevent memory leaks.
+   */
+  destroy() {
+    if (this._computation) {
+      this._computation.stop();
+      this._computation = null;
+    }
+    if (this.subscription) {
+      this.subscription.stop();
+      this.subscription = null;
+    }
+    this._activeObservers = {};
+    this.settings.set('ready', false);
   }
 
   ready() {
