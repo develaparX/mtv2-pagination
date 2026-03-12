@@ -1,11 +1,11 @@
 srarfian:pagination
 =================
 
-[![Meteor 2.x Compatible](https://img.shields.io/badge/meteor-2.x-green.svg)](https://meteor.com)
+[![Meteor Compatible](https://img.shields.io/badge/meteor-1.2.1%20--%203.x-green.svg)](https://meteor.com)
 
 This package allows you to paginate the subscriptions over meteor's collections. It can be used in a Blaze template or in ReactJS.
 
-Compatible with **Meteor 1.2.1+** and **Meteor 2.x**.
+Compatible with **Meteor 1.2.1+**, **Meteor 2.x**, and **Meteor 3.x**.
 
 
 Features
