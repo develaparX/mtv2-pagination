@@ -1,7 +1,7 @@
 Package.describe({
-  name: 'develapar:pagination',
+  name: 'srarfian:pagination',
   summary: 'Meteor pagination done right. Usable in ReactJS or Blaze templates.',
-  version: '1.2.1',
+  version: '1.2.2',
   git: 'https://github.com/develaparX/mtv2-pagination.git',
   documentation: 'README.md',
 });

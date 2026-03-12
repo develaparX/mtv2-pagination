@@ -1,4 +1,4 @@
-Develapar:Pagination
+srarfian:pagination
 =================
 
 [![Meteor 2.x Compatible](https://img.shields.io/badge/meteor-2.x-green.svg)](https://meteor.com)
@@ -19,7 +19,7 @@ Features
 + **Bootstrap 3 and 4 compatible navigation react class**. ReactJS class for a bootstrap 3 and 4 styled paginator.
 
 # Installation
-```meteor add develapar:pagination```
+```meteor add srarfian:pagination```
 
 **For Blaze paginator install [kurounin:pagination-blaze](https://atmospherejs.com/kurounin/pagination-blaze) package**
 ```meteor add develapar:pagination```
@@ -41,7 +41,7 @@ MyCollection = new Mongo.Collection('myCollectionName');
 
 In your publications file (e.g. server/publications.js):
 ```js
-import { publishPagination } from 'meteor/develapar:pagination';
+import { publishPagination } from 'meteor/srarfian:pagination';
 
 publishPagination(MyCollection);
 ```
