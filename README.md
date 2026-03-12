@@ -30,8 +30,9 @@ Features
 
 In your collections file (e.g. lib/collections.js):
 ```js
-MyCollection = new Meteor.Collection('myCollectionName');
+import { Mongo } from 'meteor/mongo';
 
+MyCollection = new Mongo.Collection('myCollectionName');
 ```
 
 In your publications file (e.g. server/publications.js):
@@ -109,6 +110,11 @@ Template.myList.onCreated(function () {
     });
 });
 
+Template.myList.onDestroyed(function () {
+    // Cleanup to prevent memory leaks
+    this.pagination.destroy();
+});
+
 Template.myList.helpers({
     isReady: function () {
         return Template.instance().pagination.ready();
@@ -133,45 +139,21 @@ For ReactJS template
 --------------------------------------------------
 In your view file (e.g. client/views/mylist.jsx):
 ```html
-MyListPage = React.createClass({
-    mixins: [ReactMeteorData],
-
-    pagination: new Meteor.Pagination(MyCollection),
-
-    getMeteorData: function() {
-        return {
-            documents: this.pagination.getPage(),
-            ready: this.pagination.ready()
-        };
-    },
-
-    renderDocument: function(document) {
-        return (
-            <li>Document #{document._id}    </li>
-        );
-    },
-
-    render: function() {
-        if (!this.pagination.ready()) {
-            return (
-                <div>Loading...</div>
-            );
-        }
-
-        return (
-            <div>
-                <ul>
-                    {this.data.documents.map(this.renderDocument)}
-                </ul>
-                <DefaultBootstrapPaginator
-                    pagination={this.pagination}
-                    limit={10}
-                    containerClass="text-center"
-                    />
-            </div>
-        );
+class MyListPage extends React.Component {
+    constructor(props) {
+        super(props);
+        this.pagination = new Meteor.Pagination(MyCollection);
     }
-});
+
+    componentWillUnmount() {
+        // Cleanup to prevent memory leaks
+        this.pagination.destroy();
+    }
+
+    render() {
+        // ... render logic
+    }
+}
 ```
 **For Meteor 1.2 [kurounin:pagination-reactjs](https://atmospherejs.com/kurounin/pagination-reactjs) package is needed for paginator**
 
