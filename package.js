@@ -7,19 +7,16 @@ Package.describe({
 });
 
 Package.onUse((api) => {
-  api.versionsFrom(['METEOR@1.2.1', 'METEOR@2.0']);
+  // Support Meteor 2.x and 3.x
+  api.versionsFrom(['METEOR@2.0', 'METEOR@3.0']);
+  
   api.use([
     'ecmascript',
     'meteor-base',
     'check',
     'underscore',
-    'mongo',
+    'mongo@2.0.0',
   ]);
-
-  // Mongo.Collection is needed on client for count collection
-  api.use([
-    'mongo',
-  ], 'client');
 
   api.mainModule('server/pagination.js', 'server');
 
@@ -27,7 +24,7 @@ Package.onUse((api) => {
     'tracker',
     'reactive-var',
     'reactive-dict',
-    'mongo',
+    'mongo@2.0.0',
   ], 'client');
 
   api.mainModule('client/pagination.js', 'client');
