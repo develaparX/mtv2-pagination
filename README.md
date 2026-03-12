@@ -1,4 +1,4 @@
-Kurounin:Pagination
+Develapar:Pagination
 =================
 
 [![Meteor 2.x Compatible](https://img.shields.io/badge/meteor-2.x-green.svg)](https://meteor.com)
@@ -19,10 +19,10 @@ Features
 + **Bootstrap 3 and 4 compatible navigation react class**. ReactJS class for a bootstrap 3 and 4 styled paginator.
 
 # Installation
-```meteor add kurounin:pagination```
+```meteor add develapar:pagination```
 
 **For Blaze paginator install [kurounin:pagination-blaze](https://atmospherejs.com/kurounin/pagination-blaze) package**
-```meteor add kurounin:pagination```
+```meteor add develapar:pagination```
 
 **For ReactJS paginator in Meteor 1.2 install [kurounin:pagination-reactjs](https://atmospherejs.com/kurounin/pagination-reactjs) package**
 ```meteor add kurounin:pagination-reactjs```
@@ -41,7 +41,7 @@ MyCollection = new Mongo.Collection('myCollectionName');
 
 In your publications file (e.g. server/publications.js):
 ```js
-import { publishPagination } from 'meteor/kurounin:pagination';
+import { publishPagination } from 'meteor/develapar:pagination';
 
 publishPagination(MyCollection);
 ```
