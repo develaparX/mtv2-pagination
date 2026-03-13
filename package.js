@@ -1,7 +1,7 @@
 Package.describe({
   name: 'srarfian:pagination',
   summary: 'Secure Meteor pagination with NoSQL injection & prototype pollution protection. For ReactJS/Blaze.',
-  version: '1.2.8',
+  version: '1.2.9',
   git: 'https://github.com/develaparX/meteor-pagination.git',
   documentation: 'README.md',
 });

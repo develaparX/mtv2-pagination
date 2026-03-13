@@ -2,7 +2,7 @@ srarfian:pagination
 =================
 
 [![Meteor Compatible](https://img.shields.io/badge/meteor-1.2.1%20--%203.x-green.svg)](https://meteor.com)
-[![Version](https://img.shields.io/badge/version-1.2.8-blue.svg)](https://atmospherejs.com/srarfian/pagination)
+[![Version](https://img.shields.io/badge/version-1.2.9-blue.svg)](https://atmospherejs.com/srarfian/pagination)
 
 This is a **security-hardened fork** of [kurounin:pagination](https://atmospherejs.com/kurounin/pagination) focused on the **core pagination engine** with production-ready security protections.
 
@@ -314,6 +314,19 @@ All errors properly propagated to client with descriptive messages:
 - Transform function errors caught and reported
 
 # Changelog
+
+### 1.2.9 (2026-03-13) - Security Hardening Update
+
+#### 🔴 Security Fixes
+- **Client-side Query Sanitization**: Added `sanitizeClientQuery()` for defense-in-depth
+- **Sort Validation**: Prototype pollution protection in client `sort()` method
+- **Fields Protection**: Added FORBIDDEN_OPERATORS check in client `fields()` method
+- **Server Sort/Fields**: Added prototype pollution keys check (`__proto__`, `constructor`, `prototype`)
+
+#### 🟠 Stability Fixes
+- **Race Condition Fix**: Added `isStopped` flag to prevent updates after subscription stop
+- **Marker Cleanup**: Clean up subscription markers in non-reactive mode onStop
+- **Transform Options Validation**: Validate `transform_options` returns object before using
 
 ### 1.2.8 (2026-03-13) - Security & Stability Release
 
