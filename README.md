@@ -84,23 +84,18 @@ publishPagination(MyCollection, {
         return {user_id: this.userId};
     },
     transform_filters: function (filters, options) {
-        // called after filters & dynamic_filters
-        allowedKeys = ['_id', 'title'];
-
+        const allowedKeys = ['_id', 'title'];
         const modifiedFilters = [];
-
-        // filters is an array of the provided filters (client side filters & server side filters)
         for (let i = 0; i < filters.length; i++) {
-            modifiedFilters[i] =  _.extend(
+            modifiedFilters[i] = _.extend(
                 _.pick(filters[i], allowedKeys),
                 {user_id: this.userId}
             );
         }
-
         return modifiedFilters;
     },
     transform_options: function (filters, options) {
-        const fields = { name: 1, email: 1 }
+        const fields = { name: 1, email: 1 };
         if (Roles.userIsInRole(this.userId, 'admin')) {
             fields.deleted = 1;
         }
@@ -108,7 +103,6 @@ publishPagination(MyCollection, {
         return options;
     }
 });
-
 ```
 
 For Blaze template
@@ -144,7 +138,6 @@ Template.myList.onCreated(function () {
 });
 
 Template.myList.onDestroyed(function () {
-    // Cleanup to prevent memory leaks
     this.pagination.destroy();
 });
 
@@ -158,7 +151,6 @@ Template.myList.helpers({
     documents: function () {
         return Template.instance().pagination.getPage();
     },
-    // optional helper used to return a callback that should be executed before changing the page
     clickEvent: function() {
         return function(e, templateInstance, clickedPage) {
             e.preventDefault();
@@ -179,7 +171,6 @@ class MyListPage extends React.Component {
     }
 
     componentWillUnmount() {
-        // Cleanup to prevent memory leaks
         this.pagination.destroy();
     }
 
@@ -200,218 +191,162 @@ You can check out [this example application in React](https://github.com/mgscrea
 
 # Server Pagination settings available on init
 
-* `name`: set the publication name (defaults to **collection name**; *needs to be unique, to not collide with other publications*)
-* `filters`: provide a set of filters on the server-side, which can not be overridden (defaults to **{}**, meaning no filters)
-* `dynamic_filters`: provide a function which returns additional filters to be applied (**this** is the publication; receives no other parameters)
-* `transform_filters`: provide a function which returns the modified filters object to be applied (**this** is the publication; receives the current **filters** as an array containing the client & server defined filters and **options** as parameters)
-* `transform_options`: provide a function which returns the modified options object to be applied (**this** is the publication; receives the current **filters** as an array containing the client & server defined filters and **options** as parameters)
-* `countInterval`: set the interval in ms at which the subscription count is updated (defaults to **10000**, meaning every 10s)
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `name` | String | collection._name | Publication name (must be unique) |
+| `filters` | Object | `{}` | Server-side filters that cannot be overridden |
+| `dynamic_filters` | Function | `() => {}` | Function returning additional filters (`this` is publication context) |
+| `transform_filters` | Function | - | Transform filters array before query |
+| `transform_options` | Function | - | Transform options object before query |
+| `countInterval` | Number | 10000 | Count update interval in ms (min: 50, max: 60000) |
 
 
 # Client Pagination settings available on init
 
-* `name`: set the subscription name (defaults to **collection name**; *needs to be identical with the server side publication name*)
-* `page`: set the initial page, for example the page parameter from url (defaults to **1**)
-* `perPage`: set the number of documents to be fetched per page (defaults to **10**)
-* `skip`: set the number of documents that should be skipped when fetching a page (defaults to **0**)
-* `filters`: filters to be applied to the subscription (defaults to **{}**, meaning no filters)
-* `fields`: fields to be returned (defaults to **{}**, meaning all fields)
-* `sort`: set the sorting for retrieved documents (defaults to **{_id: 1}**)
-* `reactive`: set the subscription reactivity, allowing to only retrieve the initial results when set to false (defaults to **true**)
-* `debug`: console logs the query and options used when performing the find (defaults to **false**)
-* `connection`: the server connection that will manage this collection. Pass the return value of calling DDP.connect to specify a different server. (defaults to **Meteor.connection**)
+| Setting | Type | Default | Description |
+|---------|------|---------|-------------|
+| `name` | String | collection._name | Subscription name (must match server publication) |
+| `page` | Number | 1 | Initial page number |
+| `perPage` | Number | 10 | Documents per page (max: 1000) |
+| `skip` | Number | 0 | Additional documents to skip (max: 100000) |
+| `filters` | Object | `{}` | Query filters |
+| `fields` | Object | `{}` | Fields to return |
+| `sort` | Object | `{ _id: 1 }` | Sort order |
+| `reactive` | Boolean | true | Enable reactive updates |
+| `debug` | Boolean | false | Enable debug logging |
+| `connection` | Object | Meteor.connection | DDP connection |
 
 
 # Client Pagination available methods
 
-* `currentPage([int])`: get/set the current page
-* `perPage([int])`: get/set the number of documents per page
-* `skip([int])`: get/set the number of documents to skip
-* `filters([Object])`: get/set the current filters
-* `fields([Object])`: get/set the retrieved fields
-* `sort([Object])`: get/set the sorting order
-* `debug([boolean])`: get/set the debug
-* `totalItems()`: get the total number of documents
-* `totalPages()`: get the total number of pages
-* `ready()`: checks if the subscription for the current page is ready
-* `refresh()`: forcefully refreshes the subscription (useful for non-reactive subscriptions)
-* `getPage()`: returns the documents for the current page
-* `destroy()`: cleanup method to stop subscriptions and prevent memory leaks. Call this when component/template is destroyed (e.g., in `componentWillUnmount` for React or `onDestroyed` for Blaze)
-
-
-# Blaze Paginator template
-
-A Blaze template is provided to allow navigation through available pages:
-
-In the template html file add the paginator
-```html
-{{> defaultBootstrapPaginator pagination=templatePagination onClick=clickEvent limit=10 containerClass="text-center"}}
-```
-Available template parameters are:
-* `pagination`: pagination instance
-* `limit`: the maximum number of page links to display
-* `containerClass`: optional container class for the paginator
-* `paginationClass`: optional class for the *ul* element (defaults to `pagination`)
-* `itemClass`: optional class for the page links elements
-* `wrapLinks`: if set to true page links will be wrapped in *li* elements (defaults to `true`)
-* `onClick`: optional callback to be called when page link is clicked (default callback runs `e.preventDefault()`)
-
-
-# ReactJS Paginator class
-
-A ReactJS class is provided to allow navigation through available pages:
-
-```js
-<DefaultBootstrapPaginator pagination={this.pagination} limit={10} containerClass="text-center" />
-```
-Available class properties are:
-* `pagination`: pagination instance
-* `limit`: maximum number of page links to display (defaults to **10**)
-* `containerClass`: optional container class for the paginator
+| Method | Description |
+|--------|-------------|
+| `currentPage([int])` | Get/set current page |
+| `perPage([int])` | Get/set documents per page |
+| `skip([int])` | Get/set additional skip offset |
+| `filters([Object])` | Get/set query filters |
+| `fields([Object])` | Get/set fields projection |
+| `sort([Object])` | Get/set sort order |
+| `debug([boolean])` | Get/set debug mode |
+| `totalItems()` | Get total document count |
+| `totalPages()` | Get total page count |
+| `ready()` | Check if subscription is ready |
+| `refresh()` | Force subscription refresh |
+| `getPage()` | Get documents for current page |
+| `destroy()` | Cleanup subscriptions and prevent memory leaks |
 
 
 # Security
 
-This package includes enterprise-grade security protections against common vulnerabilities:
+This package includes enterprise-grade security protections:
 
 ## NoSQL Injection Protection
 
-All queries sanitized to remove dangerous MongoDB operators:
-- **`$where`** - Prevents arbitrary JavaScript execution in queries
-- **`$eval`** - Prevents server-side code execution
-- **`$function`** - Prevents function execution
+Removes dangerous MongoDB operators from all queries:
+- `$where` - Prevents arbitrary JavaScript execution
+- `$eval` - Prevents server-side code execution  
+- `$function` - Prevents function execution
 
-Sanitization applied to:
-- Client queries (`query` parameter)
-- Server-side filters (`settings.filters`)
-- Dynamic filters (`dynamic_filters` return value)
-- Transform filters results (`transform_filters` return array)
-- Options (`options.sort`, `options.fields` via `transform_options`)
-
-## Rate Limiting / DoS Protection
-
-| Setting | Minimum | Maximum | Default |
-|---------|---------|---------|---------|
-| Documents per page | 1 | 1000 | 10 |
-| Count update interval | 50ms | 60000ms | 10000ms |
-
-Limits enforced at multiple layers:
-- Client-side validation
-- Server-side enforcement
-- Post-transform validation (after `transform_options`)
+Applied to: client queries, server filters, dynamic filters, transform filters, sort, and fields.
 
 ## Prototype Pollution Protection
 
-- Server settings: `Object.create(null)` for prototype-less objects
-- Client settings: Forbidden key filtering (`__proto__`, `constructor`, `prototype`)
-- Client fields: Additional prototype pollution protection in `fields()` method
+- Server: Uses `Object.create(null)` for prototype-less objects
+- Both: Filters forbidden keys (`__proto__`, `constructor`, `prototype`)
+- Client: Additional validation in `filters()`, `fields()`, `sort()` methods
+
+## DoS Protection
+
+| Limit | Value | Description |
+|-------|-------|-------------|
+| MAX_LIMIT | 1000 | Maximum documents per page |
+| MAX_SKIP | 100000 | Maximum skip offset |
+| countInterval | 50-60000ms | Prevents count spam |
 
 ## Error Handling
 
-All errors properly propagated to client with descriptive messages:
+- All publication errors use `self.error()` instead of `throw` (prevents publication crash)
 - Error codes 4000-4006 for specific failure modes
-- Database errors propagated via `self.error()`
-- Transform function errors caught and reported
+- Graceful degradation on transform function failures
+
+
+# Important Notes
+
+## Offset-based Pagination
+
+This package uses **offset-based pagination** (`skip` + `limit`), not cursor-based pagination.
+
+**Implications:**
+- ✅ Users can jump to any page directly
+- ✅ Total page count is available
+- ⚠️ Large skip values impact performance
+- ⚠️ Data can shift if documents are added/removed
+
+**For very large datasets**, consider cursor-based pagination alternatives.
+
+## MAX_SKIP Limit
+
+The `skip` parameter is limited to 100,000 to prevent DoS attacks.
+
+Example with `perPage: 25`:
+- Maximum skip = 100,000
+- Maximum effective page ≈ 4,000 pages
+- Beyond this, users should use filters to narrow results
+
 
 # Changelog
 
-### 1.3.0 (2026-03-13) - Critical Security & Bug Fixes
+### 1.3.0 (2026-03-13)
 
-#### 🔴 Critical Fixes
-- **Publication Error Handling**: Changed `throw` to `self.error()` + `return` to prevent publication crash
-- **sanitizeQuery Prototype Pollution**: Added `__proto__`, `constructor`, `prototype` checks
+**Critical Fixes:**
+- Publication errors now use `self.error()` + `return` instead of `throw` (prevents publication crash)
+- `sanitizeQuery()` now checks for prototype pollution keys
 
-#### 🟠 Stability Fixes
-- **Skip DoS Protection**: Added `MAX_SKIP` (100000) limit to prevent DoS attacks
-- **Sort Validation**: Default to `{_id: 1}` for invalid/non-object input
-- **getPage() Edge Case**: Fixed auto-page logic when `totalItems=0`
-- **Cursor Cleanup**: Set `countCursor = null` in `onStop()` for proper cleanup
+**Stability:**
+- Added `MAX_SKIP` (100,000) limit to prevent DoS
+- `sort()` defaults to `{_id: 1}` for invalid input
+- Fixed `getPage()` auto-page logic when `totalItems=0`
+- Proper `countCursor` cleanup in `onStop()`
 
-### 1.2.9 (2026-03-13) - Security Hardening Update
+**Breaking Changes:**
+- `skip` is now limited to 100,000 maximum
+- Invalid `sort` values now default to `{_id: 1}` instead of being set as-is
 
-#### 🔴 Security Fixes
-- **Client-side Query Sanitization**: Added `sanitizeClientQuery()` for defense-in-depth
-- **Sort Validation**: Prototype pollution protection in client `sort()` method
-- **Fields Protection**: Added FORBIDDEN_OPERATORS check in client `fields()` method
-- **Server Sort/Fields**: Added prototype pollution keys check (`__proto__`, `constructor`, `prototype`)
+### 1.2.9 (2026-03-13)
 
-#### 🟠 Stability Fixes
-- **Race Condition Fix**: Added `isStopped` flag to prevent updates after subscription stop
-- **Marker Cleanup**: Clean up subscription markers in non-reactive mode onStop
-- **Transform Options Validation**: Validate `transform_options` returns object before using
+- Client-side query sanitization (`sanitizeClientQuery`)
+- Prototype pollution protection in `sort()` and `fields()`
+- Race condition fix with `isStopped` flag
+- Subscription marker cleanup in non-reactive mode
+- `transform_options` return type validation
 
-### 1.2.8 (2026-03-13) - Security & Stability Release
+### 1.2.8 (2026-03-13)
 
-#### 🔴 Security Fixes
-- **NoSQL Injection Protection**: Removed dangerous MongoDB operators (`$where`, `$eval`, `$function`) from all query paths
-- **Query Sanitization**: All filters (client query, `settings.filters`, `dynamic_filters`, `transform_filters` results) now sanitized
-- **Options Sanitization**: `options.sort` and `options.fields` validated for forbidden operators
-- **Transform Sanitization**: `transform_options` return values sanitized (sort, fields)
-- **Transform Filters Sanitization**: Each filter in `transform_filters` return array individually sanitized
-- **Prototype Pollution Protection**: Server settings use `Object.create(null)`, client filters forbidden keys
-- **Limit Bypass Prevention**: Re-validate limit after `transform_options` execution
-- **Rate Limiting**: Maximum 1000 documents per page, minimum 50ms count interval, maximum 60s count interval
-
-#### 🟠 Stability Fixes
-- **Error Handling**: Try-catch untuk `dynamic_filters`, `transform_filters`, `transform_options` execution
-- **Database Error Handling**: Try-catch untuk `observeChanges` dan count cursor creation
-- **Error Propagation**: Gunakan `self.error()` untuk propagate error ke client (reactive & non-reactive)
-- **Type Preservation**: `sanitizeQuery` preservasi `Date`, `ObjectId`, `RegExp` objects
-- **Memory Leak Fix**: WeakMap untuk `Counts` dengan automatic garbage collection
-- **Non-Reactive Cleanup**: `self.onStop()` untuk non-reactive mode
-- **Observer Cleanup**: `handle.stop()` dalam `self.onStop()` dengan null check
-- **Throttle Fix**: `_.throttle` dengan `{ trailing: true }` untuk pastikan count terakhir ter-update
-
-#### 🟡 Validation Fixes
-- **Limit Validation**: Selalu default ke 10 jika undefined/invalid, parseInt untuk type coercion
-- **Transform Filters Validation**: Validasi return array, filter null/undefined items
-- **Transform Options Validation**: Re-validate limit setelah transform
-- **countInterval Validation**: Clamp antara 50ms - 60000ms
-- **Client currentPage Validation**: Harus positive integer
-- **Client perPage Validation**: Harus positive integer  
-- **Client skip Validation**: Harus non-negative integer
-
-#### 🟢 Defensive Programming
-- **Null Checks**: Check `subscription.subscriptionId` sebelum pakai
-- **Undefined Handling**: Fallback values di Tracker.autorun untuk `currentPage`, `perPage`, `skip`
-- **Initialization**: Default values dengan fallback untuk semua settings
-- **Fields Protection**: Prototype pollution protection di client `fields()` method
-
-#### 🔵 Code Quality
-- **Dead Code Removal**: Hapus `connectionRegistry` dan `getConnectionId`
-- **Constants**: Gunakan `DEFAULT_LIMIT` constant instead of hardcoded 10
-- **Typo Fix**: "needs" → "need" di error messages
-- **Error Codes**: Unique error codes (4000-4006) untuk berbagai error types
-
-### 1.2.7
-- See 1.2.8 changelog (security release)
-
-#### Breaking Changes in 1.2.8
-
-⚠️ **Maximum 1000 documents per page**: Server enforces hard limit. Override by modifying `MAX_LIMIT` constant in source if truly needed.
-
-⚠️ **Forbidden operators blocked**: `$where`, `$eval`, `$function` operators are stripped from all queries. Use alternative query patterns.
-
-⚠️ **Transform functions must return valid types**: 
-- `transform_filters` must return an array
-- `transform_options` sort/fields are sanitized after execution
-- `dynamic_filters` must return an object (not null)
-
-⚠️ **Stricter input validation**: 
-- `perPage`, `currentPage` must be positive integers
-- `skip` must be non-negative integer
-- Invalid values are rejected with console warnings
+- NoSQL injection protection (`$where`, `$eval`, `$function`)
+- Query sanitization on all input paths
+- Prototype pollution protection with `Object.create(null)`
+- DoS protection (limit max 1000, countInterval bounds)
+- Error handling with try-catch blocks
+- Memory leak fixes with WeakMap
+- Defensive programming improvements
 
 ### 1.2.6
-- **Fixed**: Memory leak in server publication (`clearInterval` instead of `clearTimeout`)
-- **Fixed**: Deprecated `Meteor.Collection` replaced with `Mongo.Collection`
-- **Fixed**: `instanceof` check in constructor now uses correct class name
-- **Added**: `destroy()` method for proper cleanup to prevent memory leaks
-- **Added**: Division by zero protection in `totalPages()` method
-- **Updated**: Meteor 2.x and 3.x compatibility
-- **Fixed**: Connection handling for DDP connections
 
-### Packages used as inspiration:
+- Memory leak fix (clearInterval vs clearTimeout)
+- Meteor 2.x and 3.x compatibility
+- Added `destroy()` method
+- Division by zero protection in `totalPages()`
 
- * [alethes:pages](https://atmospherejs.com/alethes/pages) for pagination instantiation
- * [aida:pagination](https://atmospherejs.com/aida/pagination) for bootstrap paginator template
+
+# License
+
+MIT
+
+
+# Credits
+
+Forked from [kurounin:pagination](https://atmospherejs.com/kurounin/pagination)
+
+Inspired by:
+- [alethes:pages](https://atmospherejs.com/alethes/pages)
+- [aida:pagination](https://atmospherejs.com/aida/pagination)
