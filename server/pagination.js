@@ -4,6 +4,39 @@ import { check, Match } from 'meteor/check';
 
 const countCollectionName = 'pagination-counts';
 
+// Maximum documents per page (DoS protection)
+const MAX_LIMIT = 1000;
+
+// Forbidden MongoDB operators for security
+const FORBIDDEN_OPERATORS = ['$where', '$eval', '$function'];
+
+/**
+ * Sanitize query to prevent NoSQL injection
+ * Removes forbidden MongoDB operators recursively
+ */
+function sanitizeQuery(obj) {
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(sanitizeQuery);
+  }
+  
+  const sanitized = {};
+  for (const key of Object.keys(obj)) {
+    // Check for forbidden operators
+    if (FORBIDDEN_OPERATORS.includes(key)) {
+      console.warn(`Pagination: Forbidden operator "${key}" removed from query`);
+      continue;
+    }
+    
+    // Recursively sanitize nested objects
+    sanitized[key] = sanitizeQuery(obj[key]);
+  }
+  return sanitized;
+}
+
 export function publishPagination(collection, settingsIn) {
   const settings = _.extend(
     {
@@ -36,12 +69,23 @@ export function publishPagination(collection, settingsIn) {
     check(optionsInput, Match.Optional(Object));
 
     const self = this;
-    let options = optionsInput;
+    let options = optionsInput || {};
     let findQuery = {};
     let filters = [];
+    
+    // Sanitize query to prevent NoSQL injection
+    const sanitizedQuery = sanitizeQuery(query || {});
+    
+    // Enforce limit to prevent DoS
+    if (options.limit) {
+      options.limit = Math.min(parseInt(options.limit, 10), MAX_LIMIT);
+      if (isNaN(options.limit) || options.limit < 1) {
+        options.limit = 10; // Default fallback
+      }
+    }
 
-    if (!_.isEmpty(query)) {
-      filters.push(query);
+    if (!_.isEmpty(sanitizedQuery)) {
+      filters.push(sanitizedQuery);
     }
 
     if (!_.isEmpty(settings.filters)) {
