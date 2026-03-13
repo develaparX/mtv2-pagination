@@ -1,6 +1,6 @@
 Package.describe({
   name: 'srarfian:pagination',
-  summary: 'Meteor pagination done right. Usable in ReactJS or Blaze templates.',
+  summary: 'Secure Meteor pagination with NoSQL injection protection, prototype pollution prevention, and DoS resistance. For ReactJS or Blaze templates.',
   version: '1.2.7',
   git: 'https://github.com/develaparX/meteor-pagination.git',
   documentation: 'README.md',

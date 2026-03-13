@@ -289,7 +289,7 @@ The package automatically sanitizes client queries to remove dangerous MongoDB o
 
 # Changelog
 
-### 1.2.7
+### 1.2.7 (2026-03-13)
 - **Security**: Fixed NoSQL injection vulnerability (removed `$where`, `$eval`, `$function` operators)
 - **Security**: Added limit validation (max 1000 docs per page) to prevent DoS attacks
 - **Security**: Fixed prototype pollution vulnerability in settings (server & client)
