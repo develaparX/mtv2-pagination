@@ -6,6 +6,9 @@ import { Tracker } from 'meteor/tracker';
 // Support both Meteor 1.x (Meteor.Collection) and Meteor 2.x+ (Mongo.Collection)
 const Collection = Mongo?.Collection || Meteor.Collection;
 
+// Default limit for pagination
+const DEFAULT_LIMIT = 10;
+
 // Use WeakMap for automatic garbage collection when connections are closed
 const Counts = new WeakMap();
 
@@ -60,11 +63,11 @@ class PaginationFactory {
     this.settings.set('name', settings.name);
 
     if (!this.currentPage()) {
-      this.currentPage(settings.page);
+      this.currentPage(settings.page || 1);
     }
 
     if (!this.perPage()) {
-      this.perPage(settings.perPage);
+      this.perPage(settings.perPage || DEFAULT_LIMIT);
     }
 
     if (!this.filters()) {
@@ -75,8 +78,8 @@ class PaginationFactory {
       this.fields(settings.fields);
     }
 
-    if (!this.skip()) {
-      this.skip(settings.skip);
+    if (this.skip() === undefined || this.skip() === null) {
+      this.skip(settings.skip || 0);
     }
 
     if (!this.sort()) {
@@ -91,11 +94,15 @@ class PaginationFactory {
     this._computation = null;
 
     this._computation = Tracker.autorun(() => {
+      const currentPage = this.currentPage() || 1;
+      const perPage = this.perPage() || DEFAULT_LIMIT;
+      const skip = this.skip() || 0;
+      
       const options = {
         fields: this.fields(),
         sort: this.sort(),
-        skip: (this.currentPage() - 1) * this.perPage() + this.skip(),
-        limit: this.perPage(),
+        skip: (currentPage - 1) * perPage + skip,
+        limit: perPage,
         reactive: settings.reactive
       };
 
@@ -310,9 +317,9 @@ class PaginationFactory {
   getPage() {
     const query = {};
 
-    if (!this.subscription) {
+    if (!this.subscription || !this.subscription.subscriptionId) {
+      // Trigger resubscribe if needed
       this.settings.get('resubscribe');
-
       return [];
     }
 
@@ -320,7 +327,10 @@ class PaginationFactory {
       const totalItems = getSubscriptionCount(`sub_${this.subscription.subscriptionId}`, this.connection);
       this.settings.set('totalItems', totalItems);
 
-      if (this.currentPage() > 1 && totalItems <= this.perPage() * this.currentPage()) {
+      const currentPage = this.currentPage();
+      const perPage = this.perPage();
+      
+      if (currentPage > 1 && totalItems <= perPage * currentPage) {
         // move to last page available
         this.currentPage(this.totalPages());
       }
