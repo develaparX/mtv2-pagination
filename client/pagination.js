@@ -6,7 +6,11 @@ import { Tracker } from 'meteor/tracker';
 // Support both Meteor 1.x (Meteor.Collection) and Meteor 2.x+ (Mongo.Collection)
 const Collection = Mongo?.Collection || Meteor.Collection;
 
-const Counts = {};
+// Use WeakMap for automatic garbage collection when connections are closed
+const Counts = new WeakMap();
+
+// Map to store connectionId -> connection for cleanup tracking
+const connectionRegistry = new Map();
 
 function getConnectionId(connection) {
   if (typeof connection._stream === 'object') {
@@ -27,13 +31,13 @@ function getConnectionId(connection) {
 }
 
 function getSubscriptionCount(id, connection) {
-  const connectionId = getConnectionId(connection);
-  
-  if (!Counts.hasOwnProperty(connectionId)) {
-      Counts[connectionId] = new Collection('pagination-counts', { connection });
+  // Use connection object directly as WeakMap key
+  if (!Counts.has(connection)) {
+    Counts.set(connection, new Collection('pagination-counts', { connection }));
   }
   
-  const doc = Counts[connectionId].findOne(id);
+  const countCollection = Counts.get(connection);
+  const doc = countCollection.findOne(id);
 
   return (doc && doc.count) || 0;
 }
