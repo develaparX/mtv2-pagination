@@ -44,13 +44,11 @@ function sanitizeQuery(obj) {
   
   const sanitized = {};
   for (const key of Object.keys(obj)) {
-    // Check for forbidden operators
-    if (FORBIDDEN_OPERATORS.includes(key)) {
-      console.warn(`Pagination: Forbidden operator "${key}" removed from query`);
+    if (FORBIDDEN_OPERATORS.includes(key) || key === '__proto__' || key === 'constructor' || key === 'prototype') {
+      console.warn(`Pagination: Forbidden key/operator "${key}" removed from query`);
       continue;
     }
     
-    // Recursively sanitize nested objects
     sanitized[key] = sanitizeQuery(obj[key]);
   }
   return sanitized;
@@ -175,32 +173,31 @@ export function publishPagination(collection, settingsIn) {
     try {
       dynamic_filters = settings.dynamic_filters.call(self);
     } catch (err) {
-      throw new Meteor.Error(4004, `dynamic_filters execution failed: ${err.message}`);
+      self.error(new Meteor.Error(4004, `dynamic_filters execution failed: ${err.message}`));
+      return;
     }
 
     if (typeof dynamic_filters === 'object' && dynamic_filters !== null) {
-      // Sanitize dynamic_filters to prevent injection
       const sanitizedDynamicFilters = sanitizeQuery(dynamic_filters);
       if (!_.isEmpty(sanitizedDynamicFilters)) {
         filters.push(sanitizedDynamicFilters);
       }
     } else {
-      // eslint-disable-next-line max-len
-      throw new Meteor.Error(4003, 'Invalid dynamic filters return type. Server side dynamic filters need to be a function that returns an object!');
+      self.error(new Meteor.Error(4003, 'Invalid dynamic filters return type. Server side dynamic filters need to be a function that returns an object!'));
+      return;
     }
 
     if (typeof settings.transform_filters === 'function') {
       try {
         const transformed = settings.transform_filters.call(self, filters, options);
-        // Validate that transform_filters returns an array
         if (Array.isArray(transformed)) {
-          // Sanitize each filter in the array (filter out null/undefined)
           filters = transformed.filter(f => f != null).map(sanitizeQuery);
         } else {
           console.warn('Pagination: transform_filters should return an array, using original filters');
         }
       } catch (err) {
-        throw new Meteor.Error(4005, `transform_filters execution failed: ${err.message}`);
+        self.error(new Meteor.Error(4005, `transform_filters execution failed: ${err.message}`));
+        return;
       }
     }
 
@@ -219,7 +216,8 @@ export function publishPagination(collection, settingsIn) {
         if (options.sort) options.sort = sanitizeQuery(options.sort);
         if (options.fields) options.fields = sanitizeQuery(options.fields);
       } catch (err) {
-        throw new Meteor.Error(4006, `transform_options execution failed: ${err.message}`);
+        self.error(new Meteor.Error(4006, `transform_options execution failed: ${err.message}`));
+        return;
       }
     }
 
@@ -335,6 +333,7 @@ export function publishPagination(collection, settingsIn) {
         if (handle) {
           handle.stop();
         }
+        countCursor = null;
       });
     }
 

@@ -9,6 +9,9 @@ const Collection = Mongo?.Collection || Meteor.Collection;
 // Default limit for pagination
 const DEFAULT_LIMIT = 10;
 
+// Maximum skip value to prevent DoS
+const MAX_SKIP = 100000;
+
 const FORBIDDEN_OPERATORS = ['$where', '$eval', '$function'];
 
 function sanitizeClientQuery(obj) {
@@ -276,10 +279,9 @@ class PaginationFactory {
 
   skip(skip) {
     if (arguments.length === 1) {
-      // Validate skip - must be non-negative integer
       const validated = parseInt(skip, 10);
       if (!isNaN(validated) && validated >= 0) {
-        this.settings.set('skip', validated);
+        this.settings.set('skip', Math.min(validated, MAX_SKIP));
       } else {
         console.warn('Pagination: Invalid skip, must be non-negative integer');
       }
@@ -290,7 +292,7 @@ class PaginationFactory {
 
   sort(sort) {
     if (arguments.length === 1) {
-      if (sort && typeof sort === 'object') {
+      if (sort && typeof sort === 'object' && !Array.isArray(sort)) {
         const safeSort = {};
         Object.keys(sort).forEach(key => {
           if (key !== '__proto__' && key !== 'constructor' && key !== 'prototype') {
@@ -302,7 +304,7 @@ class PaginationFactory {
         });
         this.settings.set('sort', safeSort);
       } else {
-        this.settings.set('sort', sort);
+        this.settings.set('sort', { _id: 1 });
       }
     } else {
       return this.settings.get('sort');
@@ -373,9 +375,9 @@ class PaginationFactory {
       const currentPage = this.currentPage();
       const perPage = this.perPage();
       
-      if (currentPage > 1 && totalItems <= perPage * currentPage) {
-        // move to last page available
-        this.currentPage(this.totalPages());
+      if (totalItems > 0 && currentPage > 1 && totalItems <= perPage * (currentPage - 1)) {
+        const newPage = Math.ceil(totalItems / perPage) || 1;
+        this.currentPage(newPage);
       }
     }
 
