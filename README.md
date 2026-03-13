@@ -169,7 +169,7 @@ Template.myList.helpers({
 For ReactJS template
 --------------------------------------------------
 In your view file (e.g. client/views/mylist.jsx):
-```html
+```jsx
 class MyListPage extends React.Component {
     constructor(props) {
         super(props);
@@ -191,10 +191,9 @@ class MyListPage extends React.Component {
 **For Meteor 1.3+ [react-bootstrap-pagination](https://www.npmjs.com/package/react-bootstrap-pagination) npm package is needed for paginator**
 
 
-# Demo project
-For an example on how this package can be implemented check [the pagination example project](https://github.com/develaparX/mtv2-pagination).
+# Demo Projects
 
-You can also checkout [this example application in React](https://github.com/mgscreativa/kurounin-pagination-react-example) created by [mgscreativa](https://github.com/mgscreativa).
+You can check out [this example application in React](https://github.com/mgscreativa/kurounin-pagination-react-example) created by [mgscreativa](https://github.com/mgscreativa) for a working implementation example.
 
 
 # Server Pagination settings available on init
@@ -271,13 +270,14 @@ Available class properties are:
 
 # Changelog
 
-### 1.2.1
+### 1.2.6
 - **Fixed**: Memory leak in server publication (`clearInterval` instead of `clearTimeout`)
 - **Fixed**: Deprecated `Meteor.Collection` replaced with `Mongo.Collection`
 - **Fixed**: `instanceof` check in constructor now uses correct class name
 - **Added**: `destroy()` method for proper cleanup to prevent memory leaks
 - **Added**: Division by zero protection in `totalPages()` method
-- **Updated**: Meteor 2.x compatibility
+- **Updated**: Meteor 2.x and 3.x compatibility
+- **Fixed**: Connection handling for DDP connections
 
 ### Packages used as inspiration:
 
