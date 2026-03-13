@@ -220,7 +220,18 @@ class PaginationFactory {
 
   fields(fields) {
     if (arguments.length === 1) {
-      this.settings.set('fields', fields);
+      // Prevent prototype pollution in fields
+      if (fields && typeof fields === 'object') {
+        const safeFields = {};
+        Object.keys(fields).forEach(key => {
+          if (key !== '__proto__' && key !== 'constructor' && key !== 'prototype') {
+            safeFields[key] = fields[key];
+          }
+        });
+        this.settings.set('fields', safeFields);
+      } else {
+        this.settings.set('fields', fields);
+      }
     } else {
       return this.settings.get('fields');
     }
@@ -228,7 +239,13 @@ class PaginationFactory {
 
   skip(skip) {
     if (arguments.length === 1) {
-      this.settings.set('skip', skip);
+      // Validate skip - must be non-negative integer
+      const validated = parseInt(skip, 10);
+      if (!isNaN(validated) && validated >= 0) {
+        this.settings.set('skip', validated);
+      } else {
+        console.warn('Pagination: Invalid skip, must be non-negative integer');
+      }
     } else {
       return this.settings.get('skip');
     }

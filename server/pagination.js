@@ -189,7 +189,8 @@ export function publishPagination(collection, settingsIn) {
         const transformed = settings.transform_filters.call(self, filters, options);
         // Validate that transform_filters returns an array
         if (Array.isArray(transformed)) {
-          filters = transformed;
+          // Sanitize each filter in the array
+          filters = transformed.map(sanitizeQuery);
         } else {
           console.warn('Pagination: transform_filters should return an array, using original filters');
         }
@@ -207,6 +208,9 @@ export function publishPagination(collection, settingsIn) {
         if (isNaN(options.limit) || options.limit < 1 || options.limit > MAX_LIMIT) {
           options.limit = DEFAULT_LIMIT;
         }
+        // Sanitize sort and fields if present after transform
+        if (options.sort) options.sort = sanitizeQuery(options.sort);
+        if (options.fields) options.fields = sanitizeQuery(options.fields);
       } catch (err) {
         throw new Meteor.Error(4006, `transform_options execution failed: ${err.message}`);
       }
@@ -242,7 +246,7 @@ export function publishPagination(collection, settingsIn) {
         docs = collection.find(findQuery, options).fetch();
       } catch (err) {
         console.error('Pagination: Error fetching non-reactive data:', err.message);
-        self.ready();
+        self.error(new Meteor.Error(500, `Database error: ${err.message}`));
         return;
       }
 
