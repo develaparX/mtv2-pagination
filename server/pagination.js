@@ -110,7 +110,18 @@ export function publishPagination(collection, settingsIn) {
     if (options.limit) {
       options.limit = Math.min(parseInt(options.limit, 10), MAX_LIMIT);
       if (isNaN(options.limit) || options.limit < 1) {
-        options.limit = 10; // Default fallback
+        options.limit = DEFAULT_LIMIT;
+      }
+    }
+    
+    // Validate sort option to prevent injection via sort operators
+    if (options.sort && typeof options.sort === 'object') {
+      // Check for dangerous keys in sort object
+      for (const key of Object.keys(options.sort)) {
+        if (FORBIDDEN_OPERATORS.includes(key)) {
+          console.warn(`Pagination: Forbidden operator "${key}" removed from sort`);
+          delete options.sort[key];
+        }
       }
     }
 
@@ -118,8 +129,9 @@ export function publishPagination(collection, settingsIn) {
       filters.push(sanitizedQuery);
     }
 
+    // Sanitize server-side filters as well (defense in depth)
     if (!_.isEmpty(settings.filters)) {
-      filters.push(settings.filters);
+      filters.push(sanitizeQuery(settings.filters));
     }
 
     let dynamic_filters;
@@ -140,7 +152,13 @@ export function publishPagination(collection, settingsIn) {
 
     if (typeof settings.transform_filters === 'function') {
       try {
-        filters = settings.transform_filters.call(self, filters, options);
+        const transformed = settings.transform_filters.call(self, filters, options);
+        // Validate that transform_filters returns an array
+        if (Array.isArray(transformed)) {
+          filters = transformed;
+        } else {
+          console.warn('Pagination: transform_filters should return an array, using original filters');
+        }
       } catch (err) {
         throw new Meteor.Error(4005, `transform_filters execution failed: ${err.message}`);
       }

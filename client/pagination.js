@@ -9,24 +9,6 @@ const Collection = Mongo?.Collection || Meteor.Collection;
 // Use WeakMap for automatic garbage collection when connections are closed
 const Counts = new WeakMap();
 
-function getConnectionId(connection) {
-  if (typeof connection._stream === 'object') {
-    if (
-        typeof connection._stream.socket === 'object' &&
-        typeof connection._stream.socket._base_url === 'string' &&
-        connection._stream.socket._base_url.length > 0
-    ) {
-      return connection._stream.socket._base_url;
-    }
-
-    if (typeof connection._stream.rawUrl === 'string' && connection._stream.rawUrl.length > 0) {
-      return connection._stream.rawUrl;
-    }
-  }
-  
-  return 'unknown';
-}
-
 function getSubscriptionCount(id, connection) {
   // Use connection object directly as WeakMap key
   if (!Counts.has(connection)) {
