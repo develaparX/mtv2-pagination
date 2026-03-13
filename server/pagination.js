@@ -37,18 +37,45 @@ function sanitizeQuery(obj) {
   return sanitized;
 }
 
+/**
+ * Sanitize settings key to prevent prototype pollution
+ */
+function sanitizeKey(key) {
+  if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+    console.warn(`Pagination: Forbidden key "${key}" removed from settings`);
+    return null;
+  }
+  return key;
+}
+
 export function publishPagination(collection, settingsIn) {
-  const settings = _.extend(
-    {
-      name: collection._name,
-      filters: {},
-      dynamic_filters() {
-        return {};
-      },
-      countInterval: 10000,
+  // Use Object.create(null) to prevent prototype pollution
+  const settings = Object.create(null);
+  
+  // Safe extend with key sanitization
+  const defaults = {
+    name: collection._name,
+    filters: {},
+    dynamic_filters() {
+      return {};
     },
-    settingsIn || {}
-  );
+    countInterval: 10000,
+  };
+  
+  // Copy defaults
+  Object.keys(defaults).forEach(key => {
+    settings[key] = defaults[key];
+  });
+  
+  // Copy settingsIn with sanitization
+  if (settingsIn && typeof settingsIn === 'object') {
+    Object.keys(settingsIn).forEach(key => {
+      const safeKey = sanitizeKey(key);
+      if (safeKey) {
+        settings[safeKey] = settingsIn[key];
+      }
+    });
+  }
 
   if (typeof settings.filters !== 'object') {
     // eslint-disable-next-line max-len
