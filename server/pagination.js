@@ -84,7 +84,7 @@ export function publishPagination(collection, settingsIn) {
 
   if (typeof settings.dynamic_filters !== 'function') {
     // eslint-disable-next-line max-len
-    throw new Meteor.Error(4002, 'Invalid dynamic filters provided. Server side dynamic filters needs to be a function!');
+    throw new Meteor.Error(4002, 'Invalid dynamic filters provided. Server side dynamic filters need to be a function!');
   }
 
   if (settings.countInterval < 50) {
@@ -119,23 +119,36 @@ export function publishPagination(collection, settingsIn) {
       filters.push(settings.filters);
     }
 
-    const dynamic_filters = settings.dynamic_filters.call(self);
+    let dynamic_filters;
+    try {
+      dynamic_filters = settings.dynamic_filters.call(self);
+    } catch (err) {
+      throw new Meteor.Error(4004, `dynamic_filters execution failed: ${err.message}`);
+    }
 
-    if (typeof dynamic_filters === 'object') {
+    if (typeof dynamic_filters === 'object' && dynamic_filters !== null) {
       if (!_.isEmpty(dynamic_filters)) {
         filters.push(dynamic_filters);
       }
     } else {
       // eslint-disable-next-line max-len
-      throw new Meteor.Error(4002, 'Invalid dynamic filters return type. Server side dynamic filters needs to be a function that returns an object!');
+      throw new Meteor.Error(4003, 'Invalid dynamic filters return type. Server side dynamic filters need to be a function that returns an object!');
     }
 
     if (typeof settings.transform_filters === 'function') {
-      filters = settings.transform_filters.call(self, filters, options);
+      try {
+        filters = settings.transform_filters.call(self, filters, options);
+      } catch (err) {
+        throw new Meteor.Error(4005, `transform_filters execution failed: ${err.message}`);
+      }
     }
 
     if (typeof settings.transform_options === 'function') {
-      options = settings.transform_options.call(self, filters, options);
+      try {
+        options = settings.transform_options.call(self, filters, options);
+      } catch (err) {
+        throw new Meteor.Error(4006, `transform_options execution failed: ${err.message}`);
+      }
     }
 
     if (filters.length > 0) {
